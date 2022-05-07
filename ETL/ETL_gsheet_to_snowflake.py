@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from datetime import date
 
-def updateReportDetails(report_id,end_date,cur,SPREADSHEET_ID='1MHqiaZ3ikxvEQAvJ2lw2m7bo__MOBzXgpR_7nsclA6U',RANGE_NAME='InfoLookup!A:U'): 
+def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEET_ID='1MHqiaZ3ikxvEQAvJ2lw2m7bo__MOBzXgpR_7nsclA6U',RANGE_NAME='InfoLookup!A:U'): 
 
     # If modifying these scopes, delete the file token.json.
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -80,7 +80,7 @@ def updateReportDetails(report_id,end_date,cur,SPREADSHEET_ID='1MHqiaZ3ikxvEQAvJ
     # print(df1)
 
     filepath=os.path.dirname(os.path.realpath('__file__'))
-    filename=os.path.join(filepath,'ReportDetails_{date}.csv').format(date=today)
+    filename=os.path.join(filepath,'{reportname}_{date}.csv').format(reportname=reportname, date=today)
     df1.to_csv('ReportDetails_{date}.csv'.format(date=today), index=False, sep=';')
     report_ids=','.join(report_id)
 
@@ -89,8 +89,8 @@ def updateReportDetails(report_id,end_date,cur,SPREADSHEET_ID='1MHqiaZ3ikxvEQAvJ
     cur.execute('''create or replace stage my_int_stage_1 file_format=myformat copy_options = (on_error='skip_file');''')
     qry_put= '''PUT file://{filename} @my_int_stage_1;'''.format(filename=filename)
     qry_create = '''
-    --CREATE OR REPLACE TABLE MARKETING_SCIENCE.LOCAL.REPORT_DETAILS (
-    CREATE TABLE IF NOT EXISTS MARKETING_SCIENCE.LOCAL.REPORT_DETAILS (
+    --CREATE OR REPLACE TABLE {tablename} (
+    CREATE TABLE IF NOT EXISTS {tablename} (
         report_name                 varchar,
         report_id                   int,
         client_name                 varchar(50),
@@ -115,24 +115,19 @@ def updateReportDetails(report_id,end_date,cur,SPREADSHEET_ID='1MHqiaZ3ikxvEQAvJ
         conversion_pixel_id         array,
         conversion_pixel_name       array,
         updated_date                date
-    ) CLUSTER BY (report_id);'''
+    ) CLUSTER BY (report_id);'''.format(tablename=destination)
     if (end_date=='null'):
-        qry_delete = '''DELETE FROM MARKETING_SCIENCE.LOCAL.REPORT_DETAILS WHERE report_id in ({report_id});'''.format(report_id=report_ids)
+        qry_delete = '''DELETE FROM {tablename} WHERE report_id in ({report_id});'''.format(tablename=destination,report_id=report_ids)
     else:
-        qry_delete = '''DELETE FROM MARKETING_SCIENCE.LOCAL.REPORT_DETAILS WHERE report_id in ({report_id}) and end_date={end_date};'''.format(report_id=report_ids, end_date=end_date)
+        qry_delete = '''DELETE FROM {tablename} WHERE report_id in ({report_id}) and end_date={end_date};'''.format(tablename=destination, report_id=report_ids, end_date=end_date)
     
-    qry_copy = '''COPY INTO MARKETING_SCIENCE.LOCAL.REPORT_DETAILS from @my_int_stage_1 '''
+    qry_copy = '''COPY INTO {tablename} from @my_int_stage_1 '''.format(tablename=destination)
     
     cur.execute(qry_put)
     cur.execute(qry_create)
     cur.execute(qry_delete)
     cur.execute(qry_copy)
-    cur.execute('select * from MARKETING_SCIENCE.LOCAL.REPORT_DETAILS where report_id in ({report_id});'.format(report_id=report_ids))
-
+    cur.execute('select * from {tablename} where report_id in ({report_id});'.format(tablename=destination,report_id=report_ids))
 
     rows=cur.fetch_pandas_all()
     display(rows)
-
-# updateReportDetails(report_id=['20116','20854','21537','19328','21761','20518','22624','21761'], end_date='null')
-# updateReportDetails(report_id=['20518','22624','21761'],end_date='null')
-# updateReportDetails(report_id=['22624'],end_date='null')
