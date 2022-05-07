@@ -10,7 +10,6 @@ def sql_execute(filename,cur):
     # display(sqlCommands)
 
     for command in sqlCommands:
-        print(command)
         try:
             cur.execute(command)
             rows = cur.fetchall()
