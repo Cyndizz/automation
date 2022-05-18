@@ -64,6 +64,7 @@ def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEE
         df['Kantar Product ID']=df['Kantar Product ID'].apply(lambda x: x.split("\n"))
         df['Vizio Fingerprint IDs']=df['Vizio Fingerprint IDs'].apply(lambda x: re.sub(r'"','',x).split("\n"))
         df['Youtube Ad IDs']=df['Youtube Ad IDs'].apply(lambda x: re.sub(r'"','',x).split("\n"))
+        df['Facebook Campaign ID']=df['Facebook Campaign ID'].apply(lambda x: re.sub(r'"','',x).split("\n"))
         df['Conversion Pixel IDs']=df['Conversion Pixel'].apply(lambda x: re.findall(r'\d+',x))
         df['Conversion Pixel Names']=df['Conversion Pixel'].apply(lambda x: re.sub(r'[^\D+]','',x).split("\n"))
         df['Conversion Pixel']=df['Conversion Pixel'].apply(lambda x: x.split("\n"))
@@ -82,7 +83,7 @@ def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEE
     # print(cols)
     df=df[['ReportName','Report ID', 'Client', 'Client_param', 'Scope', 'DMA Filtering','Start Date', 'End Date', 'Audience IDs', 
          'Attribution Window', 'Kantar Advertiser ID', 'Kantar Product ID', 'Vizio Fingerprint IDs', 'Youtube Ad IDs', 
-         'Facebook Pixel ID', 'Facebook Account ID', 'Conversion Pixel', 'DMA Codes','Conversion Table', 'Campaign Weight Table', 'Mapped Final Union Table',
+         'Facebook Pixel ID', 'Facebook Account ID','Facebook Campaign ID', 'Conversion Pixel', 'DMA Codes','Conversion Table', 'Campaign Weight Table', 'Mapped Final Union Table',
          'Conversion Pixel IDs', 'Conversion Pixel Names', 'updated_date']]
 
     filepath=os.path.dirname(os.path.realpath('__file__'))
@@ -113,6 +114,7 @@ def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEE
         youtube_ad_id               array,
         fb_pixel_id                 bigint,
         fb_account_id               bigint,
+        fb_campaign_id              array,
         conversion_pixel            array,
         dma_code                    array,
         conversion_table            varchar,
