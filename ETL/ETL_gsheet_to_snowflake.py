@@ -50,7 +50,12 @@ def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEE
         # values[0]
         header=values[0]
         value=values[1:]
-        df = pd.DataFrame(value,columns=header)
+        df1 = pd.DataFrame(value,columns=header)
+        # print(df1)
+        if (end_date=='null'):
+            df=df1.loc[(df1['Report ID'].isin(report_id))]
+        else:    
+            df=df1.loc[(df1['Report ID'].isin(report_id))&(df1['End Date']==end_date)]
         # Compile from the Gsheet
         df['Scope']=df['Scope'].apply(lambda x: x.split(", "))
         df['DMA Filtering']=df['DMA Filtering'].apply(lambda x: x.split("\n"))
@@ -66,22 +71,23 @@ def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEE
         df['updated_date']=today
         # print(df['Vizio Fingerprint IDs'])
         # print(df['Kantar Product ID'])
-        if (end_date=='null'):
-            df1=df.loc[(df['Report ID'].isin(report_id))]
-        else:    
-            df1=df.loc[(df['Report ID'].isin(report_id))&(df['End Date']==end_date)]
-
         if not values:
             print('No data found.')
 
     except HttpError as err:
         print(err)
 
-    # print(df1)
+    # print(df)
+    # cols = list(df1.columns.values)
+    # print(cols)
+    df=df[['ReportName','Report ID', 'Client', 'Client_param', 'Scope', 'DMA Filtering','Start Date', 'End Date', 'Audience IDs', 
+         'Attribution Window', 'Kantar Advertiser ID', 'Kantar Product ID', 'Vizio Fingerprint IDs', 'Youtube Ad IDs', 
+         'Facebook Pixel ID', 'Facebook Account ID', 'Conversion Pixel', 'DMA Codes','Conversion Table', 'Campaign Weight Table', 'Mapped Final Union Table',
+         'Conversion Pixel IDs', 'Conversion Pixel Names', 'updated_date']]
 
     filepath=os.path.dirname(os.path.realpath('__file__'))
     filename=os.path.join(filepath,'{reportname}_{date}.csv').format(reportname=reportname, date=today)
-    df1.to_csv('ReportDetails_{date}.csv'.format(date=today), index=False, sep=';')
+    df.to_csv(filename, index=False, sep=';')
     report_ids=','.join(report_id)
 
     # print(report_ids)
@@ -89,8 +95,8 @@ def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEE
     cur.execute('''create or replace stage my_int_stage_1 file_format=myformat copy_options = (on_error='skip_file');''')
     qry_put= '''PUT file://{filename} @my_int_stage_1;'''.format(filename=filename)
     qry_create = '''
-    --CREATE OR REPLACE TABLE {tablename} (
-    CREATE TABLE IF NOT EXISTS {tablename} (
+    CREATE OR REPLACE TABLE {tablename} (
+    --CREATE TABLE IF NOT EXISTS {tablename} (
         report_name                 varchar,
         report_id                   int,
         client_name                 varchar(50),
@@ -100,11 +106,11 @@ def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEE
         start_date                  int,
         end_date                    int,
         audience_id                 array,
+        attribution_window          int,
         kantar_adveritser_id        array,
         kantar_product_id           array,
         vizio_fingerprint_id        array,
         youtube_ad_id               array,
-        yt_source_impression        bigint,
         fb_pixel_id                 bigint,
         fb_account_id               bigint,
         conversion_pixel            array,
