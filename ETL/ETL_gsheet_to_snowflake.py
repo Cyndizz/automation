@@ -96,8 +96,8 @@ def updateReportDetails(report_id,end_date,cur,destination,reportname,SPREADSHEE
     cur.execute('''create or replace stage my_int_stage_1 file_format=myformat copy_options = (on_error='skip_file');''')
     qry_put= '''PUT file://{filename} @my_int_stage_1;'''.format(filename=filename)
     qry_create = '''
-    CREATE OR REPLACE TABLE {tablename} (
-    --CREATE TABLE IF NOT EXISTS {tablename} (
+    --CREATE OR REPLACE TABLE {tablename} (
+    CREATE TABLE IF NOT EXISTS {tablename} (
         report_name                 varchar,
         report_id                   int,
         client_name                 varchar(50),
